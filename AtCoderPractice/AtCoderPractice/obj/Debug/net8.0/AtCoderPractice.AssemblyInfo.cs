@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AtCoderPractice")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ac32a60ae020e6d511e60b772a1e0a0211e92040")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+55e807a3fd17a278f5fc4f68c55a5c9d015a8ce8")]
 [assembly: System.Reflection.AssemblyProductAttribute("AtCoderPractice")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AtCoderPractice")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
