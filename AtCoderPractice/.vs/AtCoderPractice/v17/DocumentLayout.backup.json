@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\moai0\\git\\AtCoder\\AtCoderPractice\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{0C752EE4-B254-41C1-8FB3-ECA6A2E2DCFB}|AtCoderPractice\\AtCoderPractice.csproj|c:\\users\\moai0\\git\\atcoder\\atcoderpractice\\atcoderpractice\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{0C752EE4-B254-41C1-8FB3-ECA6A2E2DCFB}|AtCoderPractice\\AtCoderPractice.csproj|solutionrelative:atcoderpractice\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\moai0\\git\\AtCoder\\AtCoderPractice\\AtCoderPractice\\Program.cs",
+              "RelativeDocumentMoniker": "AtCoderPractice\\Program.cs",
+              "ToolTip": "C:\\Users\\moai0\\git\\AtCoder\\AtCoderPractice\\AtCoderPractice\\Program.cs",
+              "RelativeToolTip": "AtCoderPractice\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-07-26T01:50:50.559Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
