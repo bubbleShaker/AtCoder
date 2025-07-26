@@ -1,0 +1,15 @@
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\bin\Debug\net8.0\AtCoderPractice.exe
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\bin\Debug\net8.0\AtCoderPractice.deps.json
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\bin\Debug\net8.0\AtCoderPractice.runtimeconfig.json
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\bin\Debug\net8.0\AtCoderPractice.dll
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\bin\Debug\net8.0\AtCoderPractice.pdb
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\obj\Debug\net8.0\AtCoderPractice.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\obj\Debug\net8.0\AtCoderPractice.AssemblyInfoInputs.cache
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\obj\Debug\net8.0\AtCoderPractice.AssemblyInfo.cs
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\obj\Debug\net8.0\AtCoderPractice.csproj.CoreCompileInputs.cache
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\obj\Debug\net8.0\AtCoderPractice.sourcelink.json
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\obj\Debug\net8.0\AtCoderPractice.dll
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\obj\Debug\net8.0\refint\AtCoderPractice.dll
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\obj\Debug\net8.0\AtCoderPractice.pdb
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\obj\Debug\net8.0\AtCoderPractice.genruntimeconfig.cache
+C:\Users\moai0\git\AtCoder\AtCoderPractice\AtCoderPractice\obj\Debug\net8.0\ref\AtCoderPractice.dll
