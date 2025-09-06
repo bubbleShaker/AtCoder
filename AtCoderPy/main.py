@@ -23,7 +23,7 @@ def input():
 
 def main():
     # Your code here
-    pass
+    print("Hello, Python")
 
 if __name__ == "__main__":
     main()
