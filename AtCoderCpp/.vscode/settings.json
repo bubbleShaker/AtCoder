@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "all": "cpp",
+    "dsu": "cpp",
+    "lazysegtree": "cpp"
+  }
+}
