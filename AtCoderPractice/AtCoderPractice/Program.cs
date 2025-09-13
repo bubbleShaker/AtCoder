@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -19,10 +19,10 @@ public class Program
 
         var cardsToCreate = new List<(long value, int originalIndex)>();
 
-        // 1.1 base cards
+        // base cards (all l)
         for (int i = 0; i < m; i++) cardsToCreate.Add((l, i + 1));
 
-        // 1.2 adjustment cards: powers of two within range, overflow-safe
+        // adjustment cards: powers of two within [1, u-l], overflow-safe
         long range = Math.Max(1L, u - l);
         long currentPowerOf2 = 1;
         for (int i = 0; i < Math.Max(0, n - m); i++)
@@ -32,14 +32,14 @@ public class Program
             else currentPowerOf2 = 1;
         }
 
-        // 1.3 print A
+        // print A
         ConsoleEx.WriteLine(string.Join(" ", cardsToCreate.Select(c => c.value)));
         ConsoleEx.Flush();
 
         // --- Stage 2: Read B and compute X ---
         var targetsB = ConsoleEx.ReadLongArray(m);
 
-        var finalAssignments = new int[n + 1];   // by originalIndex (1-based)
+        var finalAssignments = new int[n + 1]; // by originalIndex (1-based)
         long[] mountainSums = new long[m];
 
         var baseCards = cardsToCreate.GetRange(0, Math.Min(m, cardsToCreate.Count));
@@ -58,128 +58,169 @@ public class Program
         // no adjustment cards -> output and finish
         if (adjustmentCards.Count == 0)
         {
-            var outputAssignments0 = new List<int>();
-            for (int i = 1; i <= n; i++) outputAssignments0.Add(finalAssignments[i]);
-            ConsoleEx.WriteLine(string.Join(" ", outputAssignments0));
+            var out0 = new List<int>();
+            for (int i = 1; i <= n; i++) out0.Add(finalAssignments[i]);
+            ConsoleEx.WriteLine(string.Join(" ", out0));
             ConsoleEx.Flush();
             return;
         }
 
-        // --- Improved Greedy initial solution: always place to best error reduction (allow over) ---
-        var currentAdjAssignments = new int[adjustmentCards.Count]; // mountain index in 1..m
-        long[] greedySums = (long[])mountainSums.Clone();
+        // --- Initial greedy (desc by value): place to best error reduction (allow over) ---
+        var adj = adjustmentCards.ToArray();
+        Array.Sort(adj, (a, b) => b.value.CompareTo(a.value));
 
-        adjustmentCards.Sort((a, b) => b.value.CompareTo(a.value));
-        for (int i = 0; i < adjustmentCards.Count; i++)
+        var assign = new int[adj.Length]; // 1..m
+        long[] sums = (long[])mountainSums.Clone();
+
+        for (int i = 0; i < adj.Length; i++)
         {
-            var card = adjustmentCards[i];
-            int bestMountain = 0;
+            var card = adj[i];
+            int bestJ = 0;
             long bestGain = long.MinValue;
             for (int j = 0; j < m; j++)
             {
-                long before = Math.Abs(greedySums[j] - targetsB[j]);
-                long after = Math.Abs(greedySums[j] + card.value - targetsB[j]);
+                long before = Math.Abs(sums[j] - targetsB[j]);
+                long after = Math.Abs(sums[j] + card.value - targetsB[j]);
                 long gain = before - after;
-                if (gain > bestGain) { bestGain = gain; bestMountain = j; }
+                if (gain > bestGain) { bestGain = gain; bestJ = j; }
             }
-            greedySums[bestMountain] += card.value;
-            currentAdjAssignments[i] = bestMountain + 1; // 1..m
+            sums[bestJ] += card.value;
+            assign[i] = bestJ + 1;
         }
 
-        // --- Simulated Annealing (only between 1..m) ---
-        var rand = new Random();
+        // --- Deterministic local search (coordinate descent 1-opt) ---
+        // 確実にスコアを下げる：各カードを今の和に対してベスト山へ再配置。改善がなくなるまで反復。
+        // 2〜4周くらいで十分。時間制限も見る。
+        int LS_ROUNDS = 4;
+        for (int round = 0; round < LS_ROUNDS; round++)
+        {
+            bool improved = false;
+            for (int i = 0; i < adj.Length; i++)
+            {
+                var card = adj[i];
+                int cur = assign[i] - 1;
 
+                // 現在の誤差寄与を除いた後で最適な山を再計算
+                long bestDelta = 0;
+                int bestJ = cur;
+
+                // remove from current temporarily
+                sums[cur] -= card.value;
+                long curBefore = Math.Abs(sums[cur] + card.value - targetsB[cur]);
+
+                for (int j = 0; j < m; j++)
+                {
+                    long before = (j == cur) ? curBefore : Math.Abs(sums[j] - targetsB[j]);
+                    long after = Math.Abs(((j == cur) ? sums[j] : sums[j]) + (j == cur ? card.value : 0) + (j != cur ? card.value : 0) - targetsB[j]);
+                    // 実際には j==cur の式は簡略化できるがわかりやすさ優先
+                    long gain = before - after; // 正なら改善
+                    if (gain > bestDelta)
+                    {
+                        bestDelta = gain;
+                        bestJ = j;
+                    }
+                }
+
+                if (bestJ != cur)
+                {
+                    sums[bestJ] += card.value;
+                    assign[i] = bestJ + 1;
+                    improved = true;
+                }
+                else
+                {
+                    // 戻す
+                    sums[cur] += card.value;
+                }
+
+                // 軽いタイムガード
+                if (stopwatch.Elapsed.TotalSeconds > 1.0) break;
+            }
+            if (!improved || stopwatch.Elapsed.TotalSeconds > 1.0) break;
+        }
+
+        // --- SA (finishing touch) ---
         long typical = Math.Max(1L, targetsB.Sum() / Math.Max(1, m));
-        double T_start = (double)typical;
-        double T_end = Math.Max(1e-3, typical * 1e-3);
+        long maxCard = adj.Max(c => c.value);
+        double scale = Math.Max((double)typical, (double)maxCard);
+
+        double T_start = scale;                  // 問題スケールに整合
+        double T_end = Math.Max(1e-3, scale * 1e-3);
         double timeLimit = 1.95;
 
-        long[] currentSums = (long[])mountainSums.Clone();
-        for (int i = 0; i < adjustmentCards.Count; i++)
-        {
-            int mount = currentAdjAssignments[i]; // 1..m
-            currentSums[mount - 1] += adjustmentCards[i].value;
-        }
+        // sums は最新状態になっている
+        long curErr = 0;
+        for (int j = 0; j < m; j++) curErr += Math.Abs(sums[j] - targetsB[j]);
 
-        long currentError = 0;
-        for (int i = 0; i < m; i++) currentError += Math.Abs(currentSums[i] - targetsB[i]);
-
-        long bestError = currentError;
-        var bestAdjAssignments = (int[])currentAdjAssignments.Clone();
+        long bestErr = curErr;
+        var bestAssign = (int[])assign.Clone();
+        var rnd = new Random();
 
         while (stopwatch.Elapsed.TotalSeconds < timeLimit)
         {
-            double ratio = stopwatch.Elapsed.TotalSeconds / timeLimit;
-            double temp = T_start * Math.Pow(T_end / T_start, ratio);
+            // 温度計算
+            double t = stopwatch.Elapsed.TotalSeconds / timeLimit;
+            double temp = T_start * Math.Pow(T_end / T_start, t);
 
-            int cardIndex = rand.Next(adjustmentCards.Count);
-            var card = adjustmentCards[cardIndex];
+            int i = rnd.Next(adj.Length);
+            var card = adj[i];
+            int cur = assign[i] - 1;
+            int dst = rnd.Next(m);
+            if (dst == cur) continue;
 
-            int currentMount = currentAdjAssignments[cardIndex]; // 1..m
-            int newMount = rand.Next(1, m + 1);                 // 1..m
+            // Δ誤差
+            long delta = 0;
 
-            if (currentMount == newMount) continue;
-
-            int cm = currentMount - 1;
-            int nm = newMount - 1;
-
-            long deltaError = 0;
-
-            // remove from current
+            // remove from cur
             {
-                long before = Math.Abs(currentSums[cm] - targetsB[cm]);
-                long after = Math.Abs((currentSums[cm] - card.value) - targetsB[cm]);
-                deltaError += (after - before);
+                long before = Math.Abs(sums[cur] - targetsB[cur]);
+                long after = Math.Abs((sums[cur] - card.value) - targetsB[cur]);
+                delta += (after - before);
             }
-            // add to new
+            // add to dst
             {
-                long before = Math.Abs(currentSums[nm] - targetsB[nm]);
-                long after = Math.Abs((currentSums[nm] + card.value) - targetsB[nm]);
-                deltaError += (after - before);
+                long before = Math.Abs(sums[dst] - targetsB[dst]);
+                long after = Math.Abs((sums[dst] + card.value) - targetsB[dst]);
+                delta += (after - before);
             }
 
             bool accept = false;
-            if (deltaError <= 0) accept = true;
+            if (delta <= 0) accept = true;
             else
             {
-                double denom = Math.Max(1e-9, temp);
-                double x = Math.Min(60.0, deltaError / denom);
+                double x = Math.Min(60.0, delta / Math.Max(1e-9, temp));
                 double prob = Math.Exp(-x);
-                accept = rand.NextDouble() < prob;
+                accept = rnd.NextDouble() < prob;
             }
 
             if (accept)
             {
-                currentSums[cm] -= card.value;
-                currentSums[nm] += card.value;
-                currentAdjAssignments[cardIndex] = newMount;
-                currentError += deltaError;
+                sums[cur] -= card.value;
+                sums[dst] += card.value;
+                assign[i] = dst + 1;
+                curErr += delta;
 
-                if (currentError < bestError)
+                if (curErr < bestErr)
                 {
-                    bestError = currentError;
-                    bestAdjAssignments = (int[])currentAdjAssignments.Clone();
+                    bestErr = curErr;
+                    Array.Copy(assign, bestAssign, assign.Length);
                 }
             }
         }
 
-        // Apply best assignments (all 1..m)
-        for (int i = 0; i < adjustmentCards.Count; i++)
-        {
-            finalAssignments[adjustmentCards[i].originalIndex] = bestAdjAssignments[i];
-        }
+        // write back
+        for (int i = 0; i < adj.Length; i++)
+            finalAssignments[adj[i].originalIndex] = bestAssign[i];
 
-        // Output X
-        var outputAssignments = new List<int>();
-        for (int i = 1; i <= n; i++) outputAssignments.Add(finalAssignments[i]);
-        ConsoleEx.WriteLine(string.Join(" ", outputAssignments));
+        // base はすでに設定済み
+        var outX = new List<int>();
+        for (int i = 1; i <= n; i++) outX.Add(finalAssignments[i]);
+        ConsoleEx.WriteLine(string.Join(" ", outX));
         ConsoleEx.Flush();
     }
 }
 
-/// <summary>
 /// Robust Fast I/O
-/// </summary>
 public static class ConsoleEx
 {
     private static readonly System.IO.StreamReader _streamReader =
@@ -197,7 +238,7 @@ public static class ConsoleEx
         while (_index >= _input.Length)
         {
             var line = ReadLine();
-            while (line != null && line.Length == 0) line = ReadLine(); // skip empty lines
+            while (line != null && line.Length == 0) line = ReadLine();
             if (line == null) throw new InvalidOperationException("Unexpected EOF");
             _input = line.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
             _index = 0;
