@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
@@ -7,6 +8,9 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+
         // --- Stage 1: Generate and Print Cards (A) ---
         int n = ConsoleEx.ReadInt();
         int m = ConsoleEx.ReadInt();
@@ -27,7 +31,6 @@ public class Program
         {
             cardsToCreate.Add((currentPowerOf2, m + i + 1));
             currentPowerOf2 *= 2;
-            // Reset if it gets too large to avoid overflow, cycle through smaller powers
             if (currentPowerOf2 > u - l || currentPowerOf2 <= 0) 
             {
                 currentPowerOf2 = 1;
@@ -39,88 +42,128 @@ public class Program
         ConsoleEx.Flush();
 
         // --- Stage 2: Read Targets (B) and Assign Cards (X) ---
-        
-        // 2.1: Read target B values
         var targetsB = ConsoleEx.ReadLongArray(m);
 
-        // 2.2: Initialize assignments and sums
-        var finalAssignments = new int[n + 1]; // 1-based index
+        var finalAssignments = new int[n + 1];
         long[] mountainSums = new long[m];
 
-        // 2.3: Assign base cards (first M cards) to each mountain
         var baseCards = cardsToCreate.GetRange(0, m);
+        var adjustmentCards = cardsToCreate.GetRange(m, n - m);
+
+        // Assign base cards
         for (int i = 0; i < m; i++)
         {
             var card = baseCards[i];
             mountainSums[i] += card.value;
-            finalAssignments[card.originalIndex] = i + 1; // Assign to mountain i+1
+            finalAssignments[card.originalIndex] = i + 1;
         }
 
-        // 2.4: Distribute adjustment cards using the two-phase greedy algorithm
-        var adjustmentCards = cardsToCreate.GetRange(m, n - m);
-        adjustmentCards.Sort((a, b) => b.value.CompareTo(a.value)); // Sort descending
+        // --- Initial Solution via Greedy ---
+        var currentAdjAssignments = new int[n - m];
+        long[] greedySums = (long[])mountainSums.Clone();
+        
+        adjustmentCards.Sort((a, b) => b.value.CompareTo(a.value));
+        bool[] usedInGreedy = new bool[n - m];
 
-        bool[] usedAdjustmentCards = new bool[n - m];
-
-        // Phase 1: Fill without overshooting
         for (int i = 0; i < adjustmentCards.Count; i++)
         {
             var card = adjustmentCards[i];
             int bestMountain = -1;
             long maxNeed = -1;
-
-            for (int j = 0; j < m; j++)
-            {
-                if (mountainSums[j] + card.value <= targetsB[j])
-                {
-                    long need = targetsB[j] - mountainSums[j];
-                    if (need > maxNeed)
-                    {
-                        maxNeed = need;
-                        bestMountain = j;
-                    }
+            for (int j = 0; j < m; j++){
+                if (greedySums[j] + card.value <= targetsB[j]){
+                    long need = targetsB[j] - greedySums[j];
+                    if (need > maxNeed){ maxNeed = need; bestMountain = j; }
                 }
             }
-
-            if (bestMountain != -1)
-            {
-                mountainSums[bestMountain] += card.value;
-                finalAssignments[card.originalIndex] = bestMountain + 1;
-                usedAdjustmentCards[i] = true;
+            if (bestMountain != -1){
+                greedySums[bestMountain] += card.value;
+                currentAdjAssignments[i] = bestMountain + 1;
+                usedInGreedy[i] = true;
             }
         }
-
-        // Phase 2: Overshoot for improvement
-        for (int i = 0; i < adjustmentCards.Count; i++)
-        {
-            if (usedAdjustmentCards[i]) continue;
-
+        for (int i = 0; i < adjustmentCards.Count; i++){
+            if (usedInGreedy[i]) continue;
             var card = adjustmentCards[i];
             int bestMountain = -1;
             double maxImprovement = 0;
-
-            for (int j = 0; j < m; j++)
-            {
-                double currentError = Math.Abs((double)mountainSums[j] - targetsB[j]);
-                double newError = Math.Abs((double)mountainSums[j] + card.value - targetsB[j]);
-                double improvement = currentError - newError;
-
-                if (improvement > maxImprovement)
-                {
-                    maxImprovement = improvement;
-                    bestMountain = j;
-                }
+            for (int j = 0; j < m; j++){
+                double greedyCurrentError = Math.Abs((double)greedySums[j] - targetsB[j]);
+                double newError = Math.Abs((double)greedySums[j] + card.value - targetsB[j]);
+                double improvement = greedyCurrentError - newError;
+                if (improvement > maxImprovement){ maxImprovement = improvement; bestMountain = j; }
             }
-
-            if (bestMountain != -1)
-            {
-                mountainSums[bestMountain] += card.value;
-                finalAssignments[card.originalIndex] = bestMountain + 1;
-                usedAdjustmentCards[i] = true;
+            if (bestMountain != -1){
+                greedySums[bestMountain] += card.value;
+                currentAdjAssignments[i] = bestMountain + 1;
             }
         }
 
-        // 2.5: Print the final assignments
+        // --- Simulated Annealing ---
+        var rand = new Random();
+        double T_start = 1e12;
+        double T_end = 1e6;
+        double timeLimit = 1.95;
+
+        long[] currentSums = (long[])mountainSums.Clone();
+        for(int i=0; i<adjustmentCards.Count; i++)
+        {
+            if(currentAdjAssignments[i] > 0)
+            {
+                currentSums[currentAdjAssignments[i]-1] += adjustmentCards[i].value;
+            }
+        }
+
+        long currentError = 0;
+        for(int i=0; i<m; i++) currentError += Math.Abs(currentSums[i] - targetsB[i]);
+
+        long bestError = currentError;
+        var bestAdjAssignments = (int[])currentAdjAssignments.Clone();
+
+        while (stopwatch.Elapsed.TotalSeconds < timeLimit)
+        {
+            double timeRatio = stopwatch.Elapsed.TotalSeconds / timeLimit;
+            double temp = T_start * Math.Pow(T_end / T_start, timeRatio);
+
+            int cardIndex = rand.Next(adjustmentCards.Count);
+            var card = adjustmentCards[cardIndex];
+            int currentMount = currentAdjAssignments[cardIndex];
+            int newMount = rand.Next(m + 1);
+
+            if (currentMount == newMount) continue;
+
+            long oldMountSum = (currentMount == 0) ? 0 : currentSums[currentMount - 1];
+            long newMountSum = (newMount == 0) ? 0 : currentSums[newMount - 1];
+
+            long deltaError = 0;
+            if(currentMount > 0) deltaError -= Math.Abs(oldMountSum - targetsB[currentMount-1]);
+            if(newMount > 0) deltaError -= Math.Abs(newMountSum - targetsB[newMount-1]);
+
+            if(currentMount > 0) deltaError += Math.Abs(oldMountSum - card.value - targetsB[currentMount-1]);
+            if(newMount > 0) deltaError += Math.Abs(newMountSum + card.value - targetsB[newMount-1]);
+
+            if (deltaError < 0 || rand.NextDouble() < Math.Exp(-deltaError / temp))
+            {
+                currentError += deltaError;
+                if(currentMount > 0) currentSums[currentMount-1] -= card.value;
+                if(newMount > 0) currentSums[newMount-1] += card.value;
+                currentAdjAssignments[cardIndex] = newMount;
+
+                if (currentError < bestError)
+                {
+                    bestError = currentError;
+                    bestAdjAssignments = (int[])currentAdjAssignments.Clone();
+                }
+            }
+        }
+
+        // Apply best found assignments
+        for(int i=0; i<adjustmentCards.Count; i++)
+        {
+            finalAssignments[adjustmentCards[i].originalIndex] = bestAdjAssignments[i];
+        }
+
+        // Print final result
         var outputAssignments = new List<int>();
         for(int i = 1; i <= n; i++)
         {
