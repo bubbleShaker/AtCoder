@@ -19,27 +19,27 @@ public class Program
 
         var cardsToCreate = new List<(long value, int originalIndex)>();
 
-        // 1.1: Generate M base cards (all l)
+        // 1.1 base cards
         for (int i = 0; i < m; i++) cardsToCreate.Add((l, i + 1));
 
-        // 1.2: Generate N-M adjustment cards (powers of 2, range-aware & overflow-safe)
+        // 1.2 adjustment cards: powers of two within range, overflow-safe
         long range = Math.Max(1L, u - l);
         long currentPowerOf2 = 1;
         for (int i = 0; i < Math.Max(0, n - m); i++)
         {
             cardsToCreate.Add((currentPowerOf2, m + i + 1));
-            if (currentPowerOf2 <= range / 2) currentPowerOf2 <<= 1; // 2倍しても範囲内
+            if (currentPowerOf2 <= range / 2) currentPowerOf2 <<= 1;
             else currentPowerOf2 = 1;
         }
 
-        // 1.3: Print the generated card values
+        // 1.3 print A
         ConsoleEx.WriteLine(string.Join(" ", cardsToCreate.Select(c => c.value)));
         ConsoleEx.Flush();
 
-        // --- Stage 2: Read Targets (B) and Assign Cards (X) ---
+        // --- Stage 2: Read B and compute X ---
         var targetsB = ConsoleEx.ReadLongArray(m);
 
-        var finalAssignments = new int[n + 1];   // 1-indexed by originalIndex
+        var finalAssignments = new int[n + 1];   // by originalIndex (1-based)
         long[] mountainSums = new long[m];
 
         var baseCards = cardsToCreate.GetRange(0, Math.Min(m, cardsToCreate.Count));
@@ -47,15 +47,15 @@ public class Program
             ? cardsToCreate.GetRange(m, cardsToCreate.Count - m)
             : new List<(long value, int originalIndex)>();
 
-        // Assign base cards (fixed)
+        // base assign
         for (int i = 0; i < baseCards.Count; i++)
         {
             var card = baseCards[i];
             mountainSums[i] += card.value;
-            finalAssignments[card.originalIndex] = i + 1; // mountain index is 1-based
+            finalAssignments[card.originalIndex] = i + 1;
         }
 
-        // もし調整カードが0なら、そのまま出力して終了
+        // no adjustment cards -> output and finish
         if (adjustmentCards.Count == 0)
         {
             var outputAssignments0 = new List<int>();
@@ -65,46 +65,40 @@ public class Program
             return;
         }
 
-        // --- Initial Solution via Greedy (improved: always place to max error reduction; allow over-target) ---
-        var currentAdjAssignments = new int[adjustmentCards.Count]; // 0=unassigned, else mountain index (1..m)
+        // --- Improved Greedy initial solution: always place to best error reduction (allow over) ---
+        var currentAdjAssignments = new int[adjustmentCards.Count]; // mountain index in 1..m
         long[] greedySums = (long[])mountainSums.Clone();
 
-        // 大きいカードから
         adjustmentCards.Sort((a, b) => b.value.CompareTo(a.value));
         for (int i = 0; i < adjustmentCards.Count; i++)
         {
             var card = adjustmentCards[i];
             int bestMountain = 0;
-            long bestGain = long.MinValue; // 誤差減少量（大きいほど良い）
+            long bestGain = long.MinValue;
             for (int j = 0; j < m; j++)
             {
                 long before = Math.Abs(greedySums[j] - targetsB[j]);
                 long after = Math.Abs(greedySums[j] + card.value - targetsB[j]);
                 long gain = before - after;
-                if (gain > bestGain)
-                {
-                    bestGain = gain;
-                    bestMountain = j;
-                }
+                if (gain > bestGain) { bestGain = gain; bestMountain = j; }
             }
             greedySums[bestMountain] += card.value;
-            currentAdjAssignments[i] = bestMountain + 1;
+            currentAdjAssignments[i] = bestMountain + 1; // 1..m
         }
 
-        // --- Simulated Annealing (stable temperature scaling & safe acceptance) ---
+        // --- Simulated Annealing (only between 1..m) ---
         var rand = new Random();
 
-        // スケール推定：目標の典型値に合わせる
         long typical = Math.Max(1L, targetsB.Sum() / Math.Max(1, m));
         double T_start = (double)typical;
-        double T_end = Math.Max(1e-3, typical * 1e-3); // 極端に小さくならないように
+        double T_end = Math.Max(1e-3, typical * 1e-3);
         double timeLimit = 1.95;
 
         long[] currentSums = (long[])mountainSums.Clone();
         for (int i = 0; i < adjustmentCards.Count; i++)
         {
-            int mount = currentAdjAssignments[i];
-            if (mount > 0) currentSums[mount - 1] += adjustmentCards[i].value;
+            int mount = currentAdjAssignments[i]; // 1..m
+            currentSums[mount - 1] += adjustmentCards[i].value;
         }
 
         long currentError = 0;
@@ -121,24 +115,24 @@ public class Program
             int cardIndex = rand.Next(adjustmentCards.Count);
             var card = adjustmentCards[cardIndex];
 
-            int currentMount = currentAdjAssignments[cardIndex]; // 0..m
-            int newMount = rand.Next(m + 1); // 0..m（0はどこにも置かない、だが初期は必ず置いている）
+            int currentMount = currentAdjAssignments[cardIndex]; // 1..m
+            int newMount = rand.Next(1, m + 1);                 // 1..m
 
             if (currentMount == newMount) continue;
 
+            int cm = currentMount - 1;
+            int nm = newMount - 1;
+
             long deltaError = 0;
 
-            if (currentMount > 0)
+            // remove from current
             {
-                int cm = currentMount - 1;
                 long before = Math.Abs(currentSums[cm] - targetsB[cm]);
                 long after = Math.Abs((currentSums[cm] - card.value) - targetsB[cm]);
-                deltaError += (after - before); // 悪化は正、改善は負
+                deltaError += (after - before);
             }
-
-            if (newMount > 0)
+            // add to new
             {
-                int nm = newMount - 1;
                 long before = Math.Abs(currentSums[nm] - targetsB[nm]);
                 long after = Math.Abs((currentSums[nm] + card.value) - targetsB[nm]);
                 deltaError += (after - before);
@@ -149,15 +143,15 @@ public class Program
             else
             {
                 double denom = Math.Max(1e-9, temp);
-                double x = Math.Min(60.0, deltaError / denom); // クリップで数値安定化
+                double x = Math.Min(60.0, deltaError / denom);
                 double prob = Math.Exp(-x);
                 accept = rand.NextDouble() < prob;
             }
 
             if (accept)
             {
-                if (currentMount > 0) currentSums[currentMount - 1] -= card.value;
-                if (newMount > 0) currentSums[newMount - 1] += card.value;
+                currentSums[cm] -= card.value;
+                currentSums[nm] += card.value;
                 currentAdjAssignments[cardIndex] = newMount;
                 currentError += deltaError;
 
@@ -169,22 +163,13 @@ public class Program
             }
         }
 
-        // Apply best found assignments
+        // Apply best assignments (all 1..m)
         for (int i = 0; i < adjustmentCards.Count; i++)
         {
-            int bestMount = bestAdjAssignments[i];
-            if (bestMount > 0)
-            {
-                finalAssignments[adjustmentCards[i].originalIndex] = bestMount;
-            }
-            else
-            {
-                // 0（どこにも置かない）の場合、問題仕様次第だが0を入れる（未割当を明示）
-                finalAssignments[adjustmentCards[i].originalIndex] = 0;
-            }
+            finalAssignments[adjustmentCards[i].originalIndex] = bestAdjAssignments[i];
         }
 
-        // Print final result
+        // Output X
         var outputAssignments = new List<int>();
         for (int i = 1; i <= n; i++) outputAssignments.Add(finalAssignments[i]);
         ConsoleEx.WriteLine(string.Join(" ", outputAssignments));
@@ -193,11 +178,12 @@ public class Program
 }
 
 /// <summary>
-/// Fast I/O for competitive programming (robust whitespace handling)
+/// Robust Fast I/O
 /// </summary>
 public static class ConsoleEx
 {
-    private static readonly System.IO.StreamReader _streamReader = new System.IO.StreamReader(Console.OpenStandardInput());
+    private static readonly System.IO.StreamReader _streamReader =
+        new System.IO.StreamReader(Console.OpenStandardInput());
     private static readonly System.IO.StreamWriter _streamWriter =
         new System.IO.StreamWriter(Console.OpenStandardOutput()) { AutoFlush = false };
 
@@ -211,9 +197,8 @@ public static class ConsoleEx
         while (_index >= _input.Length)
         {
             var line = ReadLine();
-            while (line != null && line.Length == 0) line = ReadLine(); // 空行スキップ
+            while (line != null && line.Length == 0) line = ReadLine(); // skip empty lines
             if (line == null) throw new InvalidOperationException("Unexpected EOF");
-            // null 指定であらゆる空白を区切りに、空トークン除去
             _input = line.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
             _index = 0;
         }
