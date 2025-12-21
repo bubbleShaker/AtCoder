@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "CSharp": {
+      "commandName": "Project",
+      "commandLineArgs": "< input.txt > output.txt",
+      "workingDirectory": "C:\\Users\\moai0\\git\\AtCoder\\CSharp\\CSharp"
+    }
+  }
+}

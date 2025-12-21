@@ -1,8 +1,0 @@
-{
-  "files.associations": {
-    "all": "cpp",
-    "dsu": "cpp",
-    "lazysegtree": "cpp"
-  },
-  "C_Cpp.errorSquiggles": "disabled"
-}

@@ -4,3 +4,6 @@ AtCoderPractice\AtCoderPractice\obj
 AtCoderPractice\AtCoderPractice\bin
 AtCoderPractice\.vs
 AtCoderCpp\ConsoleApplication1\.vs
+.vs/
+**/*.ipch
+*.VC.db
