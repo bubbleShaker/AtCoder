@@ -9,10 +9,18 @@
 
   <ItemGroup>
     <Compile Remove="162\a.cs" />
+    <Compile Remove="CodinGame\Code4Life.cs" />
+    <Compile Remove="CodinGame\Death_1.cs" />
+    <Compile Remove="CodinGame\Mad_Pod_Racing.cs" />
+    <Compile Remove="CodinGame\Unary.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="162\a.cs" />
+    <None Include="CodinGame\Code4Life.cs" />
+    <None Include="CodinGame\Death_1.cs" />
+    <None Include="CodinGame\Mad_Pod_Racing.cs" />
+    <None Include="CodinGame\Unary.cs" />
   </ItemGroup>
 
   <ItemGroup>
