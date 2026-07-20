@@ -10,6 +10,8 @@ AtCoder / CodinGame の提出コード置き場。
 | `CSharp/` | C# (.NET 8) |
 | `Py/` | Python |
 
+構成と依存関係の全体像は [docs/architecture.md](docs/architecture.md) に UML 図でまとめてある。
+
 ## Cpp のセットアップ
 
 `Cpp/Cpp.sln` を開くだけでビルドできる。追加の手動セットアップは不要。
