@@ -44,16 +44,15 @@ CSharp/CSharp/CodinGame/Code4Life/
 # --- ac-library ---
 # ヘッダ（atcoder/）と LICENSE / README / expander.py だけをリポジトリに含める。
 # ドキュメントとテストは 3.9MB あり、ビルドにも提出にも不要なので除外する。
-Cpp/ac-library/.git/
-Cpp/ac-library/document_ja/
-Cpp/ac-library/document_en/
-Cpp/ac-library/test/
-Cpp/ac-library/tools/
-# 上流の開発用メタファイル。こちらでは使わないので持ち込まない。
-Cpp/ac-library/.github/
-Cpp/ac-library/.clang-format
-Cpp/ac-library/.gitignore
-Cpp/ac-library/.gitmodules
+# ホワイトリスト方式にしてある。上流を clone し直して差し替えた時に、
+# 新しいディレクトリやメタファイルが増えていても黙って追跡対象に入らないため。
+# （末尾にスラッシュを付けないこと。付けるとディレクトリのみ対象になり
+#  .clang-format のような直下のファイルが漏れる）
+Cpp/ac-library/*
+!Cpp/ac-library/atcoder/
+!Cpp/ac-library/LICENSE
+!Cpp/ac-library/README.md
+!Cpp/ac-library/expander.py
 
 # --- 実行結果 ---
 # デバッガの出力リダイレクト先。実行のたびに変わるので追跡しない。
