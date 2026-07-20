@@ -14,6 +14,8 @@
     <Compile Remove="CodinGame\Death_1.cs" />
     <Compile Remove="CodinGame\Mad_Pod_Racing.cs" />
     <Compile Remove="CodinGame\Unary.cs" />
+    <Compile Remove="CodinGame\TronBattle.cs" />
+    <Compile Remove="CodinGame\UltimateTicTacToe.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,6 +25,8 @@
     <None Include="CodinGame\Death_1.cs" />
     <None Include="CodinGame\Mad_Pod_Racing.cs" />
     <None Include="CodinGame\Unary.cs" />
+    <None Include="CodinGame\TronBattle.cs" />
+    <None Include="CodinGame\UltimateTicTacToe.cs" />
   </ItemGroup>
 
   <ItemGroup>
