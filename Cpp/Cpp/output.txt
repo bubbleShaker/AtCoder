@@ -1,0 +1,10 @@
+group_number is 0, member is 0
+group_number is 1, member is 1
+group_number is 2, member is 2
+group_number is 2, member is 3
+group_number is 3, member is 4
+0's leader is 0
+1's leader is 1
+2's leader is 2
+3's leader is 2
+4's leader is 4
