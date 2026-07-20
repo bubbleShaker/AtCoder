@@ -19,8 +19,8 @@ graph TD
     cpp --> cpp_acl["ac-library/<br/><i>AtCoder 公式ライブラリ (864245a)</i>"]
 
     cpp_proj --> cpp_sub["Submission.cpp<br/><b>唯一のビルド対象</b>"]
-    cpp_proj --> cpp_in["input.txt<br/><i>デバッガ入力</i>"]
-    cpp_proj --> cpp_cur["425/<br/><i>直近コンテストの解答</i>"]
+    cpp_proj --> cpp_in["input.txt / Cpp.vcxproj.user<br/><i>デバッガの入出力リダイレクト設定</i>"]
+    cpp_proj --> cpp_cur["425/<br/><i>直近コンテストの解答・考察メモ</i>"]
     cpp_proj --> cpp_prev["prev/<br/><i>過去コンテストの解答・メモ</i>"]
 
     cs --> cs_sln["CSharp.sln"]
@@ -62,7 +62,7 @@ graph LR
         vcxproj -->|"AdditionalIncludeDirectories"| bits
         vcxproj -->|"AdditionalIncludeDirectories"| acl
         subm_cpp -->|"include bits/stdc++.h"| bits
-        subm_cpp -.->|"include atcoder/all"| acl
+        subm_cpp -->|"include atcoder/all"| acl
     end
 
     subgraph cssub["C# (.NET 8)"]
@@ -72,7 +72,7 @@ graph LR
         nuget["NuGet: ac-library-csharp 3.9.2"]
         referee["CodinGame/Code4Life/<br/><i>外部 repo・gitignore</i>"]
 
-        csproj -->|"Compile"| subm_cs
+        csproj -->|"暗黙 glob（**/*.cs）"| subm_cs
         csproj -.->|"Compile Remove"| arc_cs
         csproj -->|"PackageReference"| nuget
         csproj -.->|"Compile Remove"| referee
@@ -81,12 +81,26 @@ graph LR
     classDef build fill:#2d6a4f,stroke:#95d5b2,color:#fff
     classDef lib fill:#1d3557,stroke:#a8dadc,color:#fff
     classDef archive fill:#5c5470,stroke:#cdc4e0,color:#fff
+    classDef external fill:#6b3a2e,stroke:#e6b8a2,color:#fff
     class subm_cpp,subm_cs build
     class bits,acl,nuget lib
-    class arc_cpp,arc_cs,referee archive
+    class arc_cpp,arc_cs archive
+    class referee external
 ```
 
-実線が有効な依存、破線が意図的に切ってある依存。
+実線が有効な依存、破線が意図的に切ってある依存。茶色の `Code4Life/` だけは追跡自体していない外部リポジトリ（`.gitignore` 対象）。
+
+### ビルド対象の決め方が C++ と C# で逆になっている
+
+同じ「1 ファイルだけビルド」でも、**その 1 つを選ぶ仕組みが正反対**なので注意する。
+
+| | C++ (`Cpp.vcxproj`) | C# (`CSharp.csproj`) |
+|---|---|---|
+| 方式 | **許可リスト** — `ClCompile` に書いたものだけ | **拒否リスト** — SDK 形式の暗黙 glob で全 `.cs` が入り、`Compile Remove` で削る |
+| 新しいファイルを置くと | 何も起きない（未登録なので無視される） | **即座にビルド対象に入り、重複定義で壊れる** |
+| 切り替え方 | `ClCompile Include` を差し替える | `Compile Remove` のリストを入れ替える |
+
+C# 側で新しい提出コードを追加する時は、`Compile Remove` の追加を忘れるとビルドが通らなくなる。
 
 ### 図から読み取れる制約
 
