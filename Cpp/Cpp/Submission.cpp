@@ -1,36 +1,49 @@
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <atcoder/convolution>
-#include <atcoder/dsu>
-#include <atcoder/fenwicktree>
-#include <atcoder/lazysegtree>
-#include <atcoder/math>
-#include <atcoder/maxflow>
-#include <atcoder/mincostflow>
-#include <atcoder/modint>
-#include <atcoder/scc>
-#include <atcoder/segtree>
-#include <atcoder/segtree.hpp>
-#include <atcoder/string>
-#include <atcoder/twosat>
+#include <bits/stdc++.h>
+#include <atcoder/all>
 
 using namespace std;
+using namespace atcoder;
+using ll = long long;
 
 int main() {
-	int n;
-	cin >> n;
-	atcoder::dsu uf(n);
-	uf.merge(2, 3);
-	auto groups = uf.groups();
-	int group_number = 0;
-	for (auto group : groups) {
-		for (auto member : group) {
-			cout << "group_number is " << group_number << ", member is " << member << endl;
-		}
-		group_number++;
-	}
+	ll n, m;
+	cin >> n >> m;
+	vector<ll> a(n), b(n - 1);
 	for (int i = 0;i < n;i++) {
-		cout << i << "'s leader is " << uf.leader(i) << endl;
+		cin >> a[i];
 	}
+	for (int i = 0;i < n-1;i++) {
+		cin >> b[i];
+	}
+	ll ans = 100100100;
+
+	for (int first = 0;first < 2;first++) {
+		vector<int> kouho(n);
+		kouho[0] = first;
+		ll cnt = 0;
+		for (int i = 0;i < n - 1;i++) {
+			if (b[i] == 0) {
+				if (kouho[i] == 0) {
+					kouho[i + 1] = 0;
+				}
+				else {
+					kouho[i + 1] = 1;
+				}
+			}
+			if (b[i] == 1) {
+				if (kouho[i] == 0) {
+					kouho[i + 1] = 1;
+				}
+				else {
+					kouho[i + 1] = 0;
+				}
+			}
+		}
+		for (int i = 0;i < n;i++) {
+			cnt += abs(kouho[i] - a[i]);
+		}
+		ans = min(ans, cnt);
+	}
+	cout << ans << endl;
+	return 0;
 }
