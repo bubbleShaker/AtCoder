@@ -1,10 +1,65 @@
-venv/
-AtCoderCpp/ac-library
-AtCoderPractice\AtCoderPractice\obj
-AtCoderPractice\AtCoderPractice\bin
-AtCoderPractice\.vs
-AtCoderCpp\ConsoleApplication1\.vs
-.vs/
-**/*.ipch
+# --- ビルド成果物 ---
+# 注意: gitignore ではバックスラッシュはエスケープ文字であってパス区切りではない。
+# 区切りは必ずスラッシュで書くこと（以前 `AtCoderPractice\...\obj` と書いていて
+# 何にもマッチしていなかった）。
+
+# .NET / C#
+[Bb]in/
+[Oo]bj/
+
+# MSVC / C++
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww]in32/
+*.tlog/
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.obj
+*.idb
+*.iobj
+*.ipdb
+*.exp
+*.lib
+*.out
+*.ipch
 *.VC.db
-CSharp/CSharp/obj/Debug/net8.0/CSharp.AssemblyInfo.cs
+*.VC.opendb
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+# ただしデバッガの入出力リダイレクト設定（< input.txt > output.txt）が入っているので残す
+!Cpp/Cpp/Cpp.vcxproj.user
+
+# --- 第三者リポジトリのクローン ---
+# CodinGame 公式の referee（ローカル対戦用ツール）。別リポジトリなので含めない。
+# 取得: git clone https://github.com/CodinGame/Code4Life.git
+CSharp/CSharp/CodinGame/Code4Life/
+
+# --- ac-library ---
+# ヘッダ（atcoder/）と LICENSE / README / expander.py だけをリポジトリに含める。
+# ドキュメントとテストは 3.9MB あり、ビルドにも提出にも不要なので除外する。
+# ホワイトリスト方式にしてある。上流を clone し直して差し替えた時に、
+# 新しいディレクトリやメタファイルが増えていても黙って追跡対象に入らないため。
+# （末尾にスラッシュを付けないこと。付けるとディレクトリのみ対象になり
+#  .clang-format のような直下のファイルが漏れる）
+Cpp/ac-library/*
+!Cpp/ac-library/atcoder/
+!Cpp/ac-library/LICENSE
+!Cpp/ac-library/README.md
+!Cpp/ac-library/expander.py
+
+# --- 実行結果 ---
+# デバッガの出力リダイレクト先。実行のたびに変わるので追跡しない。
+# 入力側（input.txt）はテストケースとして残す。
+Cpp/Cpp/output.txt
+CSharp/CSharp/output.txt
+
+# --- その他 ---
+venv/
+__pycache__/
