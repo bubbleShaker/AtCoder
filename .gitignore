@@ -7,3 +7,4 @@ AtCoderCpp\ConsoleApplication1\.vs
 .vs/
 **/*.ipch
 *.VC.db
+CSharp/CSharp/obj/Debug/net8.0/CSharp.AssemblyInfo.cs
